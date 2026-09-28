@@ -1,4 +1,4 @@
-# ===== 构建产物 =====
+# 构建产物
 build/
 build-*/
 Debug/
@@ -9,41 +9,35 @@ Release/
 *.bin
 *.hex
 *.map
-*.list
 compile_commands.json
 
-# ===== Python =====
+# Python
 __pycache__/
 *.py[cod]
-*.egg-info/
 .venv/
 venv/
 
-# ===== MaixCAM / 模型权重 =====
-# 模型二进制体积大(单个约 2.6MB)，按需自行训练或联系作者获取。
-# 仅保留体积很小、可读的 *.mud 描述文件。
+# 模型权重
 *.axmodel
 *.cvimodel
 *.onnx
 *.pt
 dist/
 
-# ===== 数据集 =====
-# 83MB 标注帧与原始视频不入库，用 04_dataset_tools 里的脚本重新生成。
+# 数据集
 *.mp4
 2_frames/
 
-# ===== 编辑器 / 系统 =====
+# 编辑器
 .vscode/*
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/tasks.json
 .idea/
+
+# 系统
 .DS_Store
 Thumbs.db
 
-# ===== 嵌套历史备份 =====
-# 重组仓库时保留的原独立仓库 .git，见 PUBLISHING.md
-git-history-backup/
+# 历史备份
 _git_history_backup*/
-_git_history_backup*/**

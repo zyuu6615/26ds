@@ -1,16 +1,3 @@
-/**
-  ******************************************************************************
-  * @file           : app.c
-  * @brief          : 应用层 —— 任务调度 + 循迹串级控制 + 显示
-  ******************************************************************************
-  * 调度层次：
-  *   按键  10ms  Key_Scan()
-  *   任务  20ms  Task_Update()  按键事件 / 计时 / 里程 / 终点判定
-  *   外环  20ms  Track_Update() 灰度8路 -> 加权质心 -> 转向PID -> 左右目标转速
-  *   内环  10ms  速度PID -> PWM
-  ******************************************************************************
-  */
-
 #include "app.h"
 #include "lcd_spi_200.h"
 #include "motor.h"
@@ -68,23 +55,15 @@
 #define APP_RPM_R_X         126
 #define APP_RPM_VALUE_LEN   4
 
-/* 偏差与"几路黑"共用一行，DK 用来现场标定横线阈值 */
+/* 偏差与"几路黑"共用一行 */
 #define APP_OFF_VALUE_LEN   6
 #define APP_DK_LABEL_X      174
 #define APP_DK_VALUE_X      (APP_DK_LABEL_X + 3 * APP_FONT_W)
 #define APP_DK_VALUE_LEN    2
 
-/**
-  * 舵机工作模式。四种互斥 —— 谁都在每拍写脉宽，同时开就会互相覆盖。
-  *
-  *   OFF     压根不启动 TIM4_CH4 的 PWM。PD15 保持低电平，舵机收不到任何
-  *           脉冲，既不动作也不锁角度(失力状态)。注意这与"输出 0 度的脉冲"
-  *           完全不同：后者舵机会用力顶在 0 度上。
-  *   DEMO    在安全行程内自动往复摆动，用来验证机构行程与方向。
-  *   MANUAL  KEY3/KEY4 以 1us 步进手动微调，用来标定 SERVO_SAFE_* 与水平点。
-  *           此模式会征用 KEY3，翻页功能失效。
-  *   BALL    球杆闭环，由视觉数据驱动。
-  */
+/* ---------------- 舵机工作模式 ----------------
+   四种互斥：OFF 不启动 PWM；DEMO 自动往复摆动；
+   MANUAL KEY3/KEY4 步进微调(征用 KEY3，翻页失效)；BALL 球杆闭环 */
 #define APP_SERVO_OFF       0
 #define APP_SERVO_DEMO      1
 #define APP_SERVO_MANUAL    2
@@ -95,10 +74,7 @@
 #define APP_SERVO_ENABLE    (APP_SERVO_MODE != APP_SERVO_OFF)
 
 /* ---------------- 分页 ----------------
-   KEY3 循环切换。切页时整屏清空重画，之后照旧只刷新数值字段。
-
-   注意：APP_SERVO_DEMO 设为 0(舵机手动标定)时，KEY3/KEY4 会被征用为脉宽
-   微调，此时无法翻页 —— 标定是临时模式，两者不会同时用。 */
+   KEY3 循环切换，切页时整屏清空重画 */
 typedef enum
 {
   APP_PAGE_MAIN = 0,      /* 循迹主界面 */
@@ -154,26 +130,26 @@ enum
   APP_BALL_FIELD_NUM
 };
 
-/* ERR 超过这个值就标红。取任务五/六要求的 1cm */
+/* ERR 超过这个值就标红，取任务五/六要求的 1cm */
 #define APP_BALL_ERR_LIMIT_CM   1.0f
 
-/* 舵机脉宽，标定机构行程时直接读这个数 */
+/* 舵机脉宽显示位置，标定机构行程时直接读这个数 */
 #define APP_SERVO_LABEL_X   120
 #define APP_SERVO_VALUE_X   (APP_SERVO_LABEL_X + 3 * APP_FONT_W)
 #define APP_SERVO_VALUE_LEN 4
 
-/* 里程显示，用来校准轮径：跑完一圈应该读到赛道实测长度 */
+/* 里程显示，用来校准轮径 */
 #define APP_DIST_LABEL_X    140
 #define APP_DIST_VALUE_X    (APP_DIST_LABEL_X + 2 * APP_FONT_W)
 #define APP_DIST_VALUE_LEN  5
 
-/* 计时单独按 100ms 刷新，不跟着字段轮转，否则秒表跳得太慢不像话 */
+/* 计时单独刷新，不跟着字段轮转 */
 #define APP_TIME_EVERY      10
 
 /* 显示用的一阶低通系数 */
 #define APP_DISP_ALPHA      0.15f
 
-/* 实测转速低于此值(rpm)就认为车停稳了，可以从主动反拖切换成短路刹车驻车 */
+/* 实测转速低于此值(rpm)就认为车停稳，可切成短路刹车驻车 */
 #define APP_STOP_RPM_TH     3.0f
 
 /* ================= 运行时状态 ================= */
@@ -194,9 +170,8 @@ static uint8_t  s_draw_field = 0;
 static uint8_t  s_time_cnt   = 0;
 static App_Page s_page       = APP_PAGE_MAIN;
 
-/**
-  * @brief  当前页有几个数值字段
-  */
+/* ================= 显示：静态部分 ================= */
+
 static uint8_t App_FieldCount(void)
 {
   switch (s_page)
@@ -207,9 +182,6 @@ static uint8_t App_FieldCount(void)
   }
 }
 
-/**
-  * @brief  画主界面里不会变化的部分
-  */
 static void App_DrawStaticLayout(void)
 {
   char label[4] = {'0', ':', '\0', '\0'};
@@ -239,9 +211,6 @@ static void App_DrawStaticLayout(void)
   LCD_DisplayString(APP_DIST_LABEL_X, APP_I2C_Y, "D:");
 }
 
-/**
-  * @brief  画视觉页里不会变化的部分
-  */
 static void App_ShowPage(void);
 
 static void App_DrawVisionLayout(void)
@@ -262,9 +231,6 @@ static void App_DrawVisionLayout(void)
   }
 }
 
-/**
-  * @brief  画球杆页里不会变化的部分
-  */
 static void App_DrawBallLayout(void)
 {
   static const char *labels[APP_BALL_FIELD_NUM] =
@@ -283,9 +249,8 @@ static void App_DrawBallLayout(void)
   }
 }
 
-/**
-  * @brief  重画球杆页的一个数值字段
-  */
+/* ================= 显示：字段刷新 ================= */
+
 static void App_DrawBallField(uint8_t field)
 {
   uint16_t y = APP_VIS_Y0 + field * APP_VIS_DY;
@@ -336,9 +301,6 @@ static void App_DrawBallField(uint8_t field)
   }
 }
 
-/**
-  * @brief  任务号与状态，只在变化时重画
-  */
 static void App_DrawTaskLine(void)
 {
   /* 这几行只属于主界面；在别的页上调用会画花屏幕 */
@@ -407,12 +369,7 @@ static void App_DrawStatus(void)
   }
 }
 
-/**
-  * @brief  计时显示，秒 + 两位小数
-  * @note   任务四/五到达评分点后改显示锁存的分段时间并标青色 ——
-  *         任务四是 A->B(≤8s)、任务五是整圈到 A(≤30s)。行驶总时间还包含
-  *         之后的减速滑停段，比评分时间多一两秒，不能拿来对照。
-  */
+/* 到达评分点后改显示锁存的分段用时并标青色 */
 static void App_DrawTime(void)
 {
   /* 这几行只属于主界面；在别的页上调用会画花屏幕 */
@@ -438,9 +395,6 @@ static void App_DrawTime(void)
                       (double)Task_GetElapsedMs() / 1000.0, APP_VALUE_LEN, 2);
 }
 
-/**
-  * @brief  重画视觉页的一个数值字段
-  */
 static void App_DrawVisionField(uint8_t field)
 {
   const Vision_Ball *b = Vision_GetBall();
@@ -491,10 +445,7 @@ static void App_DrawVisionField(uint8_t field)
   }
 }
 
-/**
-  * @brief  重画一个数值字段
-  * @note   数值右对齐补空格，驱动会连背景一起重绘，不用先擦除
-  */
+/* 数值右对齐补空格，驱动会连背景一起重绘 */
 static void App_DrawField(uint8_t field)
 {
   if (s_page == APP_PAGE_VISION)
@@ -566,9 +517,8 @@ static void App_DrawField(uint8_t field)
 #endif
 }
 
-/**
-  * @brief  跑一拍速度环(内环)
-  */
+/* ================= 速度环（内环）================= */
+
 static void App_SpeedLoop(void)
 {
   for (uint8_t i = 0; i < MOTOR_NUM; i++)
@@ -584,14 +534,7 @@ static void App_SpeedLoop(void)
   }
 }
 
-/**
-  * @brief  任务未运行时的处理：先主动刹到零，停稳后再短路刹车驻车
-  *
-  * @note   TB6612 的短路刹车靠电机反电动势产生制动力矩，而反电动势正比于转速
-  *         —— 蠕行速度(40rpm)下反电动势很小，制动力矩弱得可怜，车会滑出一截。
-  *         所以这里先让速度环以 0 为目标继续工作，它会输出反向 PWM 把车【拽】停，
-  *         制动力矩不再依赖车速。等真正停稳了再切成短路刹车驻车、并清空积分。
-  */
+/* 任务未运行时：先用速度环主动反拖刹到零，停稳后再切短路刹车驻车 */
 static void App_Idle(void)
 {
   uint8_t moving = 0;
@@ -632,11 +575,7 @@ static void App_Idle(void)
   Motor_BrakeAll();
 }
 
-/**
-  * @brief  整屏切换到当前页
-  * @note   页与页的静态文字位置不同，必须整屏清空重画；之后回到"每拍只刷一个
-  *         数值字段"的常规节奏，不会持续占用 SPI
-  */
+/* 整屏切换到当前页，之后回到每拍只刷一个字段的节奏 */
 static void App_ShowPage(void)
 {
   LCD_Clear();

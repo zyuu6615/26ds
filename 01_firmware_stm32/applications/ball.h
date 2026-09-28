@@ -3,6 +3,8 @@
 
 #include "main.h"
 
+/* ================= 钢球位置环 ================= */
+
 #define BALL_TARGET_CM          12.5f
 
 #define BALL_KP                 25.0f
@@ -15,16 +17,20 @@
 
 #define BALL_VEL_LPF            0.30f
 
+/* 加速度前馈 */
 #define BALL_FF_ENABLE          1
 #define BALL_FF_US_PER_RPMS     2.0f
 
 #define BALL_FF_CURVE_ENABLE    0
 #define BALL_FF_CURVE_GAIN      0.04f
 
+/* 视觉有效性判据 */
 #define BALL_MIN_CONFIDENCE     0.50f
 #define BALL_TIMEOUT_MS         200
 #define BALL_DT_MIN_S           0.010f
 #define BALL_DT_MAX_S           0.150f
+
+/* ================= 接口 ================= */
 
 void Ball_Init(void);
 void Ball_Update(void);

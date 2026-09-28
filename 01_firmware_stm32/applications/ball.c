@@ -5,6 +5,8 @@
 
 #include <math.h>
 
+/* ================= 内部状态 ================= */
+
 static PID_Controller s_pid;
 
 static float    s_target_cm   = BALL_TARGET_CM;
@@ -21,6 +23,8 @@ static uint8_t  s_tracking     = 0;
 static uint8_t  s_have_prev    = 0;
 static float    s_prev_pos_cm  = 0.0f;
 
+/* ================= 内部函数 ================= */
+
 static void Ball_GoLevel(void)
 {
   Servo_SetPulseUs(SERVO_LEVEL_US);
@@ -31,6 +35,8 @@ static void Ball_GoLevel(void)
   s_have_prev = 0;
   s_tracking  = 0;
 }
+
+/* ================= 初始化与运行 ================= */
 
 void Ball_Init(void)
 {
@@ -118,6 +124,8 @@ void Ball_Update(void)
     Ball_GoLevel();
   }
 }
+
+/* ================= 接口 ================= */
 
 void Ball_Enable(uint8_t on)
 {

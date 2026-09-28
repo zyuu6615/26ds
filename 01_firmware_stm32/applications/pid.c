@@ -1,9 +1,4 @@
-/**
-  ******************************************************************************
-  * @file           : pid.c
-  * @brief          : 位置式 PID 控制器（微分先行 + 抗积分饱和）
-  ******************************************************************************
-  */
+/* ================= 位置式 PID（微分先行 + 抗积分饱和） ================= */
 
 #include "pid.h"
 
@@ -64,7 +59,7 @@ float PID_Update(PID_Controller *pid, float setpoint, float measurement)
 
     pid->integral += error * pid->dt;
 
-    /* 限幅是对积分【项】(ki*integral)做的，这样改 Ki 时限幅含义不变 */
+    /* 限幅作用于积分项 ki*integral */
     integral_max = pid->integral_limit / pid->ki;
     if (pid->integral > integral_max)
     {

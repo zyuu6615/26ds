@@ -1,4 +1,4 @@
-from maix import app, camera, display, image, nn, sys, time, uart, touchscreen
+from maix import app, camera, display, image, nn, time, uart, touchscreen
 
 from ball_position import (
     AdaptiveAlphaBetaFilter,
@@ -27,12 +27,7 @@ LOW_LATENCY_MODE = True
 
 # ============================== 模型与标定 ==============================
 
-MAIXCAM_MODEL_PATH = (
-    "models/yolo26_all_maixcam_yolo26_480_160/yolo26_all.mud"
-)
-MAIXCAM2_MODEL_PATH = (
-    "models/yolo26_all_maixcam2_yolo26_640_160/yolo26_all.mud"
-)
+MODEL_PATH = "models/yolo26_all_maixcam2_yolo26_640_160/yolo26_all.mud"
 
 AXIS_START_PX = (67, 80)
 AXIS_END_PX = (392, 81)
@@ -40,17 +35,8 @@ AXIS_START_CM = 2.5
 AXIS_END_CM = 15.5
 
 
-def model_path_for_device(device_name):
-    normalized = device_name.strip().lower()
-    if normalized == "maixcam2":
-        return MAIXCAM2_MODEL_PATH
-    if normalized in ("maixcam", "maixcam-pro", "maixcam_pro"):
-        return MAIXCAM_MODEL_PATH
-    raise ValueError("unsupported device: {}".format(device_name))
-
-
 detector = nn.YOLO26(
-    model=model_path_for_device(sys.device_name()),
+    model=MODEL_PATH,
     dual_buff=not LOW_LATENCY_MODE,
 )
 
@@ -140,7 +126,7 @@ if USE_WEBRTC:
 
 print(
     "Hybrid detector v1.0: {}x{}, model={}".format(
-        FRAME_WIDTH, FRAME_HEIGHT, model_path_for_device(sys.device_name())
+        FRAME_WIDTH, FRAME_HEIGHT, MODEL_PATH
     )
 )
 
