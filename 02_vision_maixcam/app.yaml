@@ -1,0 +1,16 @@
+id: ds11aa
+name: 触摸
+name[zh]: 触摸版本
+version: 1.0.0
+icon: ''
+author: AAa
+desc: 26电赛
+desc[zh]: 使用 NPU YOLO、模板跟踪和亮度自适应识别钢珠。
+files:
+  - models\yolo26_all_maixcam2_yolo26_640_160\yolo26_all_npu.axmodel
+  - models\yolo26_all_maixcam2_yolo26_640_160\yolo26_all_vnpu.axmodel
+  - models\yolo26_all_maixcam2_yolo26_640_160\yolo26_all.mud
+  - app.yaml
+  - ball_position.py
+  - hybrid_tracker.py
+  - main.py
