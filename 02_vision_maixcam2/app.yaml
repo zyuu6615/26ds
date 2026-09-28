@@ -3,7 +3,7 @@ name: 触摸
 name[zh]: 触摸版本
 version: 1.0.0
 icon: ''
-author: AAa
+author: yuu
 desc: 26电赛
 desc[zh]: 使用 NPU YOLO、模板跟踪和亮度自适应识别钢珠。
 files:

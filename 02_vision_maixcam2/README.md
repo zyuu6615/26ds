@@ -36,41 +36,6 @@
 局部模板匹配 → CLAHE 亮度增强后重检 → 低频全画面模板重定位。
 未采用全图 Hough 与 FFT，边缘算力不足。
 
-## 参数表
-
-### 标定（`main.py`）
-
-| 常量 | 值 | 说明 |
-| :--- | :--- | :--- |
-| `AXIS_START_PX` | `(67, 80)` | 摆杆轴线左端，量在**模型输入图**上 |
-| `AXIS_END_PX` | `(392, 81)` | 右端像素坐标 |
-| `AXIS_START_CM` | `2.5` | 左端实物位置（cm） |
-| `AXIS_END_CM` | `15.5` | 右端实物位置（cm） |
-| `LENS_CORR_STRENGTH` | `0.6` | 镜头畸变校正强度 |
-
-换模型分辨率必须重新量这四个标定值。
-
-### 检测与降级（`hybrid_tracker.py`）
-
-| 参数 | 值 | 说明 |
-| :--- | :--- | :--- |
-| `raw_confidence` | `0.18` | 原图门限，压低先拿候选 |
-| `enhanced_confidence` | `0.15` | 增强图门限 |
-| `acquire_confidence` | `0.28` | 冷启动门限（无历史位置可参考） |
-| `iou_threshold` | `0.45` | NMS 阈值 |
-| `enhanced_retry_interval` | `2` | 增强图重检间隔（帧） |
-| `global_template_interval` | `3` | 全画面模板搜索间隔 |
-| `template_refresh_interval` | `5` | 模板刷新间隔 |
-| `template_threshold` | `0.48` | 局部模板匹配阈值 |
-| `global_template_threshold` | `0.60` | 全画面模板阈值 |
-| `reset_ms` | `900` | 失联超时后整体复位 |
-
-模板验证用 CLAHE 后的相对纹理区分钢珠与水管端帽（都是圆形暗块）：
-内圈灰度标准差 ≥ `51.0` 且 P90−P10 ≥ `138.0`。这两个值在赛场光照下标定。
-
-亮度归一化：整帧均值 `<95` 或 `>170` 时做 gamma 校正（目标 `125/255`，
-钳位 `[0.55, 1.75]`）；否则用 CLAHE 拉 LAB 的 L 通道。
-
 ### 滤波（`ball_position.py`）
 
 | 参数 | 值 |

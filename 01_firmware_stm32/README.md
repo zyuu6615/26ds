@@ -75,16 +75,3 @@ cmake --build --preset Debug
 
 `CMakeLists.txt` 里的 `-u _printf_float` 不可删除，`LCD_DisplayDecimals()` 依赖它。
 
-## 关于 `lcd_driver/` 的编码
-
-该目录下 5 个文件是 **GB2312/GBK 编码**，这是刻意的，不要转成 UTF-8：
-字模索引按 GB2312 区位码排列（`addr = (GBH-0xA1)*94 + (GBL-0xA1)`），
-且中文字模以 GBK 字符串作为索引。在 GitHub 网页上中文注释显示为乱码属预期现象。
-
-本地查看请指定编码：
-
-```powershell
-Get-Content .\lcd_driver\lcd_fonts.h -Encoding Default
-```
-
-`tools/gen_gb2312_font.py` 里的 `out_c` 是作者本机路径，重新生成前需改成你的路径。
