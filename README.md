@@ -37,10 +37,7 @@ MaixCAM2（NPU 视觉）──UART 115200──► STM32F407（控制）──�
 ## 致谢
 
 方案调研阶段参考了 H 题相关的开源实现
-
-第三方组件：MaixPy / MaixCAM2 SDK（Sipeed）、OpenCV、Ultralytics YOLO、
-X-AnyLabeling、ST HAL 与 CMSIS、反客科技 LCD 驱动与字模。
-
+感谢运用到的第三方组件以及利用的其他开源方案，万分感谢！！
 ## 许可
 
 原创代码以 MIT 协议开源，见 [LICENSE](LICENSE)。
